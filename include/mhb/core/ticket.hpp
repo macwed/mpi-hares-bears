@@ -6,8 +6,9 @@
 namespace mhb {
 
 struct Ticket {
+  Ticket(Pid p, Timestamp timestamp) : pid(p), ts(timestamp) {}
   Pid pid{};
-  Timestamp timestamp{};
+  Timestamp ts{};
 };
 
 bool operator<(const Ticket& lhs, const Ticket& rhs);

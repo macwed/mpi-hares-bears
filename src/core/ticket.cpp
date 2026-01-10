@@ -2,15 +2,15 @@
 
 namespace mhb {
 bool operator<(const Ticket& lhs, const Ticket& rhs) {
-  if (lhs.timestamp != rhs.timestamp) {
-    return lhs.timestamp < rhs.timestamp;
+  if (lhs.ts != rhs.ts) {
+    return lhs.ts < rhs.ts;
   }
   return lhs.pid < rhs.pid;
 }
 
 bool operator>(const Ticket& lhs, const Ticket& rhs) {
-  if (lhs.timestamp != rhs.timestamp) {
-    return lhs.timestamp > rhs.timestamp;
+  if (lhs.ts != rhs.ts) {
+    return lhs.ts > rhs.ts;
   }
   return lhs.pid > rhs.pid;
 }

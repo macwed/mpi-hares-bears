@@ -6,13 +6,13 @@
 namespace mhb {
 using Timestamp = uint64_t;
 using Pid = uint32_t;
-using PartyId = uint64_t;
-using Weight = uint8_t;
+using PartyId = uint32_t;
+using Weight = uint32_t;
 using LogLevel = uint8_t;
 
-enum class Species : Weight {
-  kHare = 1,
-  kBear = 4
+struct PartyMember {
+  Pid pid;
+  Weight w;
 };
 
 }  // namespace mhb
