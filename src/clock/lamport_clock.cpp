@@ -1,4 +1,4 @@
-#include "mhb/clock/lamport_clock.hpp"
+#include "mhb/algorithm/lamport_algo/lamport_clock.hpp"
 
 #include <algorithm>
 
