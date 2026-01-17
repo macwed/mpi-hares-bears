@@ -2,6 +2,7 @@
 #define MPI_HARES_BEARS_LOCAL_THREAD_HPP
 
 #include <chrono>
+#include <random>
 #include <vector>
 
 #include "mhb/core/action.hpp"
@@ -10,6 +11,7 @@
 namespace mhb {
 
 constexpr double kPartyTime = 500;
+constexpr double kWantPartyChance = 0.25;
 
 class LocalThread {
  public:
@@ -38,12 +40,14 @@ class LocalThread {
 
  private:
   bool should_want_ = true;
+  std::mt19937 rng_{std::random_device{}()};
+  std::bernoulli_distribution want_dist_{kWantPartyChance};
   std::chrono::time_point<std::chrono::steady_clock> time_mark_ =
       std::chrono::steady_clock::now();
   NotifyType current_notification_ = NotifyType::kExitedParty;
 
-  bool ShouldWantParty() const {
-    return current_notification_ != NotifyType::kEnteredParty;
+  bool ShouldWantParty() {
+    return current_notification_ != NotifyType::kEnteredParty && want_dist_(rng_);
   }
 
   bool ShouldReleaseParty() const {
