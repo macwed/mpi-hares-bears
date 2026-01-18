@@ -44,7 +44,7 @@ std::vector<std::uint8_t> Serialize(const Message& msg) {
   return w.take();
 }
 
-std::optional<Message> Deserialize(std::span<const std::uint8_t> data) {
+std::optional<Message> Deserialize(const std::vector<std::uint8_t>& data) {
   ByteReader r(data);
 
   std::uint8_t type_u8 = 0;

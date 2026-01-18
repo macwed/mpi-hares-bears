@@ -18,7 +18,7 @@ class LamportPolicy : public GroupPolicy {
   public:
   explicit LamportPolicy(uint32_t max_capacity, uint8_t hare_weight, uint8_t bear_weight);
 
-  bool TryFormGroup(std::span<const PartyMember> candidates, std::vector<Pid>& group) override;
+  bool TryFormGroup(std::vector<PartyMember> candidates, std::vector<Pid>& group) override;
 
   private:
   uint32_t capacity_;

@@ -3,7 +3,6 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <span>
 #include <type_traits>
 #include <vector>
 
@@ -14,7 +13,7 @@ class ByteWriter {
  public:
   void reserve(std::size_t n) { out_.reserve(n); }
 
-  std::span<const std::uint8_t> bytes() const { return out_; }
+  const std::vector<std::uint8_t>& bytes() const { return out_; }
   const std::vector<std::uint8_t>& vec() const { return out_; }
   std::vector<std::uint8_t>&& take() { return std::move(out_); }
 
@@ -31,9 +30,16 @@ class ByteWriter {
   void byte(std::uint8_t b) { out_.push_back(b); }
 
   template <class T>
-  void array_u(std::span<const T> values) {
+  void array_u(const T* values, std::size_t count) {
     static_assert(std::is_integral_v<T> && std::is_unsigned_v<T>);
-    for (T v : values) u<T>(v);
+    for (std::size_t i = 0; i < count; ++i) {
+      u<T>(values[i]);
+    }
+  }
+
+  template <class T>
+  void array_u(const std::vector<T>& values) {
+    array_u(values.data(), values.size());
   }
 
  private:
@@ -43,9 +49,13 @@ class ByteWriter {
 // Reader: czyta liczby w little-endian z bufora bajtów. Zwraca false przy błędzie.
 class ByteReader {
  public:
-  explicit ByteReader(std::span<const std::uint8_t> data) : data_(data) {}
+  explicit ByteReader(const std::vector<std::uint8_t>& data)
+      : data_(data.data()), size_(data.size()) {}
 
-  std::size_t remaining() const { return data_.size() - off_; }
+  ByteReader(const std::uint8_t* data, std::size_t size)
+      : data_(data), size_(size) {}
+
+  std::size_t remaining() const { return size_ - off_; }
   std::size_t offset() const { return off_; }
 
   bool byte(std::uint8_t& out) {
@@ -69,16 +79,22 @@ class ByteReader {
   }
 
   template <class T>
-  bool array_u(std::span<T> out_values) {
+  bool array_u(T* out_values, std::size_t count) {
     static_assert(std::is_integral_v<T> && std::is_unsigned_v<T>);
-    for (std::size_t i = 0; i < out_values.size(); ++i) {
+    for (std::size_t i = 0; i < count; ++i) {
       if (!u<T>(out_values[i])) return false;
     }
     return true;
   }
 
+  template <class T>
+  bool array_u(std::vector<T>& out_values) {
+    return array_u(out_values.data(), out_values.size());
+  }
+
  private:
-  std::span<const std::uint8_t> data_;
+  const std::uint8_t* data_ = nullptr;
+  std::size_t size_ = 0;
   std::size_t off_ = 0;
 };
 

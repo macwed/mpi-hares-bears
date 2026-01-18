@@ -29,7 +29,7 @@ static bool ApplyCli(int argc, char** argv, mhb::config::Config& cfg,
 
     if (result.count("help")) {
       if (rank == 0) std::cout << options.help() << "\n";
-      return false; // caller can exit cleanly
+      return false;
     }
 
     if (result.count("world-size")) {

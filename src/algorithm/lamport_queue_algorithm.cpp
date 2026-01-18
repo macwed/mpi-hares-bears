@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <ranges>
 #include <sstream>
 
 namespace mhb {
@@ -25,10 +24,8 @@ bool LamportQueueAlgorithm::AmLeader() {
 }
 
 bool LamportQueueAlgorithm::AllRepliesReceived() {
-  if (std::ranges::all_of(reply_tracker_.begin(), reply_tracker_.end(), [](char c){return c == 1;})) {
-    return true;
-  }
-  return false;
+  auto it = std::find(reply_tracker_.begin(), reply_tracker_.end(), 0);
+  return it == reply_tracker_.end();
 }
 
 void LamportQueueAlgorithm::ResetTracker() {
@@ -128,7 +125,8 @@ std::vector<Action> LamportQueueAlgorithm::OnMsg(Pid pid, PartyStart party_start
   std::vector<Action> actions;
   auto& members = party_start_received.participants;
   global_queue_.Remove(members.data(), members.size());
-  if (std::ranges::any_of(members.begin(), members.end(), [&](auto pid){return pid == my_pid_;})) {
+  auto it = std::find(members.begin(), members.end(), my_pid_);
+  if (it != members.end()) {
     if (current_state_.state == AppState::kInParty) {
       //TODO: log błędu, nie powinienem dostać PartyStart, jeśli już jestem w party
     }

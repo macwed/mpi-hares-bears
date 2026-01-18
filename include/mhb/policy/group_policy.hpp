@@ -12,7 +12,7 @@ class GroupPolicy {
   public:
   virtual ~GroupPolicy() = default;
 
-  virtual bool TryFormGroup(std::span<const PartyMember> candidates, std::vector<Pid>& group) = 0;
+  virtual bool TryFormGroup(std::vector<PartyMember> candidates, std::vector<Pid>& group) = 0;
 };
 
 }  // namespace mhb

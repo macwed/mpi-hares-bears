@@ -11,7 +11,8 @@ LamportPolicy::LamportPolicy(uint32_t max_capacity, uint8_t hare_weight, uint8_t
         : capacity_(max_capacity), hare_weight_(hare_weight),
           bear_weight_(bear_weight) {}
 
-bool LamportPolicy::TryFormGroup(std::span<const PartyMember> candidates, std::vector<Pid>& group) {
+bool LamportPolicy::TryFormGroup(std::vector<PartyMember> candidates,
+                                 std::vector<Pid>& group) {
   group.clear();
   if (candidates.empty() || capacity_ == 0) return false;
   //przyjmuję wagę 1 dla zająca wg założeń projektowych

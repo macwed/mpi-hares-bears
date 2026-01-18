@@ -9,11 +9,9 @@
 #include "mhb/core/event.hpp"
 
 namespace mhb {
-Runtime::Runtime(std::unique_ptr<ITransport> transport,
-                 std::unique_ptr<IAlgorithm> algorithm,
+Runtime::Runtime(std::unique_ptr<ITransport> transport, std::unique_ptr<IAlgorithm> algorithm,
                  LocalThread local_src)
-    : transport_(std::move(transport)),
-      algorithm_(std::move(algorithm)),
+    : transport_(std::move(transport)), algorithm_(std::move(algorithm)),
       local_src_(std::move(local_src)) {}
 
 void Runtime::Run() {
