@@ -1,208 +1,143 @@
 # Architecture Overview
 
-This project is structured as a **layered, modular distributed system**, explicitly separating:
-- synchronization algorithms,
-- logical clocks and ordering,
-- transport and runtime,
-- domain-specific policies.
-
-The architecture is designed to support **multiple interchangeable distributed algorithms**
-(e.g. Lamport-based, gossip-based, DAG-based) without rewriting application logic.
-
----
+This project is a layered, modular MPI system for distributed party formation.
+It separates protocol/algorithm logic from transport, policy, and runtime so
+components can evolve independently.
 
 ## High-Level Directory Structure
 
 ```
 mpi-hares-bears/
-├── apps/ # Executables / entry points
+├── apps/                      # Executable entry point
 │   ├── mhb_main.cpp
 │   └── CMakeLists.txt
-├── README.md
-├── README_PL.md
-├── include/
-│   └── mhb/
-│       ├── algorithm/ # Synchronization algorithm interfaces & implementations
-│       ├── clock/ # Logical clock abstractions
-│       ├── core/ # Core shared data types
-│       ├── policy/ # Group formation policies
-│       ├── queue/ # Request ordering structures
-│       ├── runtime/ # Event loop and orchestration
-│       └── transport/ # Communication abstractions
-├── src/ # Implementations
-│   └── (mirrors include/)
-├── docs/ # Documentation
+├── include/mhb/               # Public headers
+│   ├── algorithm/             # Algorithm interfaces + Lamport implementation
+│   ├── clock/                 # Logical clock abstractions
+│   ├── core/                  # Shared types, messages, config
+│   ├── local/                 # Local event source simulation
+│   ├── policy/                # Group formation policies
+│   ├── queue/                 # Request ordering structures
+│   ├── runtime/               # Event loop + orchestration
+│   ├── transport/             # Transport abstraction + MPI transport
+│   └── wire/                  # Serialization utilities
+├── src/                       # Implementations (mirrors include/)
+├── docs/                      # Documentation
 │   └── ARCHITECTURE.md
-├── CMakeLists.txt
-└── .clang-format
+└── CMakeLists.txt
 ```
 
----
-
 ## Current Implementation Status
-- `core/`, `clock/`, and `queue/` contain minimal working scaffolding.
-- `algorithm/`, `policy/`, `transport/`, and `runtime/` are placeholders; behavior is not implemented yet.
 
----
+Implemented components:
+- Lamport logical clock.
+- Request queue for ordered tickets.
+- Lamport queue algorithm for forming parties.
+- Lamport group policy (capacity + hare/bear weights).
+- MPI transport.
+- Wire protocol (byte-level serialization).
+- Runtime loop + local event source.
+- CLI parsing via header-only `cxxopts`.
 
 ## Layered Architecture
 
 ### 1. Application Layer (`apps/`)
-**Purpose:** Entry points and experiment setup.
+**Purpose:** Entry point and configuration.
 
 Responsibilities:
-- MPI initialization and finalization,
-- creation of runtime and algorithm instances,
-- starting the event loop,
-- logging and termination.
+- MPI initialization/finalization.
+- Parsing CLI and validating config.
+- Creating transport, algorithm, and runtime.
+- Starting the event loop.
 
-This layer contains **no algorithmic logic**.
-
----
-
-### 2. Runtime Layer (`runtime/`)
-**Purpose:** Orchestration and control flow.
+### 2. Runtime + Local Layer (`runtime/`, `local/`)
+**Purpose:** Orchestration and event generation.
 
 Responsibilities:
-- main event loop,
-- dispatching incoming messages to the algorithm,
-- triggering algorithm actions (request join, attempt group formation),
-- coordinating transport and algorithm components.
-
-The runtime layer does **not** implement synchronization logic.
-
----
+- Main event loop: polls transport + local events.
+- Dispatching events into the algorithm.
+- Executing actions (`Send`, `Broadcast`, `Notify`, `Log`).
+- LocalThread simulates user behavior (want party / release party).
 
 ### 3. Algorithm Layer (`algorithm/`)
-**Purpose:** Distributed synchronization logic.
+**Purpose:** Distributed coordination logic.
 
 Responsibilities:
-- handling incoming protocol messages,
-- maintaining algorithm-specific state,
-- deciding *when* an action may occur.
+- Handling `Request`, `Reply`, and `PartyStart`.
+- Maintaining algorithm state and Lamport queue.
+- Requesting groups via the policy.
 
-Planned variants:
-- `lamport_queue_algorithm` – Lamport clock + total ordering + temporary initiator (placeholder).
+Current implementation:
+- `LamportQueueAlgorithm` uses total ordering and a leader-based
+  party formation step.
 
-This layer:
-- is independent of MPI,
-- depends only on abstract transport and clock interfaces,
-- can be replaced by gossip- or DAG-based algorithms.
+### 4. Policy Layer (`policy/`)
+**Purpose:** Domain rules for group selection.
 
----
+Responsibilities:
+- Enforcing capacity and composition constraints.
+- Choosing a valid participant set from a candidate list.
 
-### 4. Clock Layer (`clock/`)
+Current implementation:
+- `LamportPolicy` implements a fixed-weight hare/bear policy.
+
+### 5. Queue Layer (`queue/`)
+**Purpose:** Ordered storage of requests.
+
+Responsibilities:
+- Insert/remove tickets.
+- Provide ordered snapshots.
+
+### 6. Clock Layer (`clock/`)
 **Purpose:** Logical time and ordering.
 
 Responsibilities:
-- maintaining logical clocks,
-- updating clocks on local and remote events,
-- providing timestamps for ordering.
+- Ticking on local events.
+- Updating on message receive.
 
-Implemented clocks:
-- Lamport logical clock.
-
-Algorithms depend on clocks via abstraction, allowing alternative clock models.
-
----
-
-### 5. Queue Layer (`queue/`)
-**Purpose:** Ordered storage of synchronization requests.
+### 7. Wire Layer (`wire/`)
+**Purpose:** Serialization for transport.
 
 Responsibilities:
-- maintaining locally replicated request order,
-- insertion and removal of requests,
-- exposing ordered views for decision making.
+- Encoding messages to little-endian byte buffers.
+- Decoding buffers to `Message` variants.
 
-The queue:
-- does not make decisions,
-- does not know domain rules,
-- only enforces ordering guarantees.
-
----
-
-### 6. Policy Layer (`policy/`)
-**Purpose:** Domain-specific group formation rules.
+### 8. Transport Layer (`transport/`)
+**Purpose:** Message transport abstraction.
 
 Responsibilities:
-- selecting valid participant groups,
-- enforcing capacity and composition constraints,
-- resolving preferences (e.g. Hare/Bear weighting).
+- Sending/receiving serialized messages.
+- Mapping message flow onto MPI primitives.
 
-Policies are **fully decoupled** from synchronization algorithms.
+Current implementation:
+- `MpiTransport` uses blocking `MPI_Send` and polling via `MPI_Iprobe`.
 
----
-
-### 7. Transport Layer (`transport/`)
-**Purpose:** Communication abstraction.
-
-Responsibilities:
-- sending and receiving messages,
-- message serialization and dispatch,
-- mapping logical messages to concrete transport (MPI).
-
-Planned transport:
-- `mpi_transport` using MPI (placeholder).
-
-Algorithms do not depend directly on MPI.
-
----
-
-### 8. Core Types (`core/`)
+### 9. Core Types (`core/`)
 **Purpose:** Shared data structures and definitions.
 
 Contains:
-- message definitions,
-- ticket and identifier types,
-- configuration and shared constants,
-- common type aliases.
-
-This layer is intentionally lightweight and dependency-free.
-
----
+- `Message` variants and tickets.
+- Config and type aliases.
+- Events and actions.
 
 ## Message Flow Overview
 
-1. Application triggers a local participation request.
-2. Algorithm generates protocol messages (`REQUEST`, `REPLY`).
-3. Transport delivers messages.
-4. Runtime dispatches messages to algorithm.
-5. Algorithm updates clock and queue state.
-6. Policy evaluates group feasibility.
-7. Algorithm commits decision (`PARTY_START`).
-
-All decisions are made **locally** based on replicated state.
-
----
+1. LocalThread generates a local event (`WantParty` or `ReleaseParty`).
+2. Runtime passes the event to the algorithm.
+3. Algorithm updates clock/queue and emits actions.
+4. Runtime executes actions:
+   - `Send`/`Broadcast` goes through transport + wire encoding.
+   - `Notify` updates local state.
+5. Incoming network messages are decoded and dispatched back to the algorithm.
 
 ## Design Principles
 
-- **Separation of concerns:** synchronization, policy, and transport are independent.
-- **Local decision making:** no central coordinator.
-- **Replaceable algorithms:** algorithm layer can be swapped without affecting runtime.
-- **Explicit abstractions:** clocks, transport, and policies are defined by interfaces.
+- Separation of concerns: policy, algorithm, and transport are independent.
+- Local decision making: all decisions are made from replicated state.
+- Replaceable modules: new clocks/algorithms/policies can be swapped in.
 
----
+## Build Targets
 
-## Extensibility
+- `mhb_core` library contains core logic and MPI transport.
+- `mhb` executable wires the runtime, algorithm, and MPI startup.
 
-The architecture explicitly supports:
-- leaderless algorithms (gossip-based dissemination),
-- DAG-based causal ordering,
-- alternative group selection policies,
-- experimental metrics and tracing.
-
-Only the algorithm and queue layers need to change for most extensions.
-
----
-
-## Summary
-
-This architecture prioritizes:
-- correctness and clarity,
-- experimental flexibility,
-- clean separation between distributed systems theory and domain logic.
-
-It enables both:
-- compliance with course requirements,
-- further research-oriented experimentation with distributed synchronization algorithms.

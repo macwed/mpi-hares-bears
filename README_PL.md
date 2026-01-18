@@ -29,12 +29,12 @@ Każdy proces reprezentuje jednego uczestnika (**Zając** lub **Niedźwiedź**).
 ---
 
 ## Algorytm (zarys)
-1. Proces zgłasza chęć udziału w imprezie (REQUEST).
-2. Żądanie jest rozgłaszane do wszystkich procesów.
-3. Po otrzymaniu REPLY od wszystkich, proces trafia do kolejki.
-4. Proces na początku kolejki sprawdza możliwość utworzenia grupy.
-5. Jeśli warunki są spełnione, inicjuje imprezę (PARTY_START).
-6. Uczestnicy imprezy są usuwani z kolejek wszystkich procesów.
+1. Proces zgłasza chęć udziału, wstawia swój ticket do kolejki i rozgłasza `REQUEST`.
+2. Odbiorcy aktualizują zegar, wstawiają ticket do kolejki i wysyłają `REPLY`.
+3. Po otrzymaniu odpowiedzi od wszystkich procesów nadawca przechodzi do stanu oczekiwania w kolejce.
+4. Proces na początku kolejki próbuje utworzyć grupę zgodnie z polityką.
+5. Jeśli warunki są spełnione, rozgłasza `PARTY_START`.
+6. Uczestnicy usuwają się z kolejek i wchodzą do imprezy.
 
 ---
 
@@ -89,18 +89,6 @@ Nie badano:
 
 ---
 
-### 5. Brak formalnej analizy złożoności
-Projekt koncentruje się na:
-- poprawności logicznej,
-- zgodności z modelem Lamporta,
-- praktycznej implementacji w MPI.
-
-Nie przeprowadzono:
-- formalnej analizy złożoności czasowej,
-- ani dowodu własności typu starvation-freedom.
-
----
-
 ## Technologie
 - **C++**
 - **MPI** (np. OpenMPI)
@@ -116,3 +104,8 @@ cmake --build build
 ./build/apps/mhb
 mpirun -n <N> ./build/apps/mhb
 ```
+
+## Opcje CLI
+- `--world-size`: oczekiwany rozmiar świata MPI (walidacja)
+- `--party-capacity`: pojemność imprezy
+- `--num-bears`: liczba niedźwiedzi (zające = world_size - bears)

@@ -44,7 +44,7 @@ static bool ApplyCli(int argc, char** argv, mhb::config::Config& cfg,
       }
     }
 
-    cfg.world_size = mpi_size; // MPI is truth
+    cfg.world_size = mpi_size; // MPI prawdę powie
     cfg.party_capacity = result["party-capacity"].as<uint32_t>();
     cfg.num_bears = result["num-bears"].as<uint32_t>();
 
@@ -89,7 +89,7 @@ int main(int argc, char** argv) {
       static_cast<mhb::Pid>(rank), cfg);
   mhb::LocalThread local_src;
 
-  mhb::Runtime runtime(std::move(transport), std::move(algorithm), std::move(local_src));
+  mhb::Runtime runtime(std::move(transport), std::move(algorithm), local_src);
   runtime.Run();
 
   MPI_Finalize();

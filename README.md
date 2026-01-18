@@ -1,11 +1,11 @@
 # Hares and Bears
 **Distributed Synchronization Algorithm (Lamport Clocks, MPI)**
 
-> Architecture overview: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)  
-> Polish version: [README_PL.md](README_PL.md)
+> Architecture overview: [docs/ARCHITECTURE.md](/docs/ARCHITECTURE.md)
+> Polish version: [README_PL.md](/README_PL.md)
 
 ## Project Overview
-This project implements a fully distributed synchronization algorithm based on **Lamport clocks** and **MPI communication**, solving a **group-based access problem to limited resources** without a central coordinator.
+This project implements a distributed synchronization algorithm based on **Lamport clocks** and **MPI communication**, solving a **group-based access problem to limited resources** without a central coordinator.
 
 Each process represents a single participant, either a **Hare** or a **Bear**. Decisions about forming groups are made **locally and asynchronously**, based on each process’s local replica of a globally ordered request queue.
 
@@ -31,12 +31,12 @@ The project extends the classical distributed mutual exclusion problem with **gr
 ---
 
 ## Algorithm Outline
-1. A process requests participation by sending a `REQUEST`.
-2. The request is broadcast to all other processes.
-3. After receiving `REPLY` messages from all processes, the request is enqueued.
-4. The process at the head of the queue checks whether a valid group can be formed.
-5. If conditions are satisfied, it initiates the event by sending `PARTY_START`.
-6. Participants are removed from all local queues.
+1. A process requests participation, enqueues its ticket, and broadcasts `REQUEST`.
+2. Each receiver updates its clock, enqueues the ticket, and sends `REPLY`.
+3. After receiving replies from all processes, the requester moves to a queued state.
+4. The process at the head of the queue tries to form a valid group via policy.
+5. If successful, it broadcasts `PARTY_START`.
+6. Participants remove themselves from all local queues and enter the party.
 
 ---
 
@@ -118,3 +118,8 @@ cmake --build build
 ./build/apps/mhb
 mpirun -n <N> ./build/apps/mhb
 ```
+
+## CLI Options
+- `--world-size`: expected MPI world size (validation only)
+- `--party-capacity`: party capacity
+- `--num-bears`: number of bears (hares = world_size - bears)
