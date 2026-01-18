@@ -1,6 +1,5 @@
 #include "mhb/policy/lamport_policy/lamport_policy.hpp"
 
-#include <span>
 #include <unordered_set>
 #include <vector>
 

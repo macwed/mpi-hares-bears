@@ -1,7 +1,6 @@
 #ifndef MHB_POLICY_GROUP_POLICY_H_
 #define MHB_POLICY_GROUP_POLICY_H_
 
-#include <span>
 #include <vector>
 
 #include "mhb/core/types.hpp"

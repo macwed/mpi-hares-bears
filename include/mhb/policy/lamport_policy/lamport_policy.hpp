@@ -6,7 +6,6 @@
 #define MPI_HARES_BEARS_LAMPORT_POLICY_HPP
 
 #include <cstdint>
-#include <span>
 #include <vector>
 
 #include "mhb/core/types.hpp"
