@@ -28,6 +28,9 @@ struct Config {
   uint32_t party_id_offset = kDefaultPartyIdOffset;
   uint8_t bear_weight = kDefaultBearWeight;
   uint8_t hare_weight = kDefaultHareWeight;
+
+  uint32_t run_seconds = 0;      // 0 = nieograniczony czas działania
+  uint32_t max_parties = 0;      // limit imprez
 };
 
 constexpr Species SpeciesOf(Pid p, const Config& cfg) {
